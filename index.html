@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PentMind.ai — The Mind Behind the Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--bg2:#080d1a;--bg3:#0c1222;
+  --green:#00FF94;--green-dim:#00cc76;
+  --red:#FF2D55;--white:#E8EDF5;--gray:#4a5568;
+  --border:rgba(0,255,148,0.1);--border2:rgba(0,255,148,0.2);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:'IBM Plex Sans',sans-serif;font-weight:300;overflow-x:hidden;cursor:none}
+#cur{position:fixed;width:6px;height:6px;background:var(--green);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+#cur2{position:fixed;width:24px;height:24px;border:1px solid rgba(0,255,148,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+.scanline{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,148,0.15),transparent);pointer-events:none;z-index:1;animation:scan 12s linear infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor-blink{animation:blink 1s step-end infinite}
+
+/* LANG SWITCHER */
+.lang-bar{position:fixed;top:0;right:0;z-index:200;display:flex;gap:2px;padding:8px}
+.lang-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;
+  padding:4px 10px;border:1px solid var(--border);background:rgba(5,8,16,0.9);
+  color:var(--gray);cursor:pointer;transition:all .15s;text-transform:uppercase;
+}
+.lang-btn:hover{color:var(--green);border-color:var(--border2)}
+.lang-btn.active{color:var(--green);border-color:var(--green);background:rgba(0,255,148,0.05)}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 3rem;background:rgba(5,8,16,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--green);text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:0.05em}
+.logo-mark{width:22px;height:22px;position:relative;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:22px;height:22px}
+nav ul{list-style:none;display:flex;gap:2rem}
+nav a{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);text-decoration:none;transition:color .2s}
+nav a:hover{color:var(--green)}
+.nav-cta{border:1px solid var(--green) !important;color:var(--green) !important;padding:0.45rem 1.1rem}
+.nav-cta:hover{background:rgba(0,255,148,0.07) !important}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:8rem 3rem 5rem;position:relative;overflow:hidden}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,148,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,148,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-grid::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,transparent 30%,var(--bg) 80%)}
+.hero-terminal{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--green);letter-spacing:0.1em;margin-bottom:2rem;display:flex;align-items:center;gap:8px;position:relative;z-index:1}
+.terminal-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,10vw,9.5rem);line-height:0.88;letter-spacing:0.02em;position:relative;z-index:1;margin-bottom:0.15em}
+.hero h1 .accent{color:var(--green);position:relative;display:inline-block}
+.hero h1 .accent::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:3px;background:var(--green);clip-path:polygon(0 0,100% 0,97% 100%,3% 100%)}
+.hero-sub{font-size:1rem;color:rgba(232,237,245,0.55);max-width:480px;line-height:1.8;margin:2rem 0 2.5rem;position:relative;z-index:1;font-weight:300}
+.hero-sub strong{color:var(--white);font-weight:400}
+.hero-actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;position:relative;z-index:1}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--green);color:#050810;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.9rem 2rem;text-decoration:none;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));transition:background .2s,transform .15s}
+.btn-primary:hover{background:var(--green-dim);transform:translateY(-2px)}
+.btn-ghost{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(232,237,245,0.4);text-decoration:none;letter-spacing:0.1em;transition:color .2s;border-bottom:1px solid var(--border2);padding-bottom:2px}
+.btn-ghost:hover{color:var(--white);border-color:var(--white)}
+
+.hero-code{position:absolute;right:3rem;top:50%;transform:translateY(-50%);width:380px;background:var(--bg3);border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;padding:1.2rem;z-index:1;opacity:0.85}
+.code-bar{display:flex;align-items:center;gap:6px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+.dot-r{width:9px;height:9px;border-radius:50%;background:#FF2D55}
+.dot-y{width:9px;height:9px;border-radius:50%;background:#FFD60A}
+.dot-g{width:9px;height:9px;border-radius:50%;background:#00FF94}
+.code-title{font-size:0.6rem;color:var(--gray);margin-left:auto;letter-spacing:0.1em}
+.code-line{margin:3px 0;display:flex;gap:8px;line-height:1.6}
+.code-line .p{color:#4a9eff}.code-line .s{color:#ff9f43}.code-line .c{color:rgba(232,237,245,0.25)}.code-line .g{color:var(--green)}.code-line .r{color:var(--red)}
+@keyframes typewriter{from{width:0}to{width:100%}}
+.typing{overflow:hidden;white-space:nowrap;animation:typewriter 2s steps(30) 1s forwards;width:0}
+.typing2{overflow:hidden;white-space:nowrap;animation:typewriter 1.5s steps(25) 3s forwards;width:0}
+.typing3{overflow:hidden;white-space:nowrap;animation:typewriter 2s steps(30) 4.5s forwards;width:0}
+
+.stats{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem 3rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2rem;position:relative;z-index:1}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--green);line-height:1}
+.stat-l{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray)}
+
+section{padding:6rem 3rem;position:relative;z-index:1}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.tag::before{content:'//';opacity:0.5}
+h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,4rem);letter-spacing:0.03em;line-height:1;margin-bottom:1rem}
+
+.prob-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;margin-top:3.5rem;background:var(--border)}
+.prob-card{background:var(--bg);padding:2.5rem;position:relative;overflow:hidden;transition:background .25s}
+.prob-card:hover{background:var(--bg3)}
+.prob-num{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.2em;color:var(--green);margin-bottom:1.2rem;opacity:0.7}
+.prob-card h3{font-size:1.05rem;font-weight:500;margin-bottom:0.6rem}
+.prob-card p{font-size:0.88rem;color:rgba(232,237,245,0.45);line-height:1.75}
+.prob-bg-num{position:absolute;right:1.5rem;bottom:-1rem;font-family:'Bebas Neue',sans-serif;font-size:7rem;color:rgba(0,255,148,0.03);line-height:1;pointer-events:none}
+
+.how-section{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.how-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;margin-top:3.5rem}
+.how-steps{display:flex;flex-direction:column;gap:0}
+.how-step{display:grid;grid-template-columns:48px 1fr;gap:1.5rem;padding:1.8rem 0;border-bottom:1px solid var(--border);transition:padding-left .2s;cursor:default}
+.how-step:first-child{border-top:1px solid var(--border)}
+.how-step:hover{padding-left:0.5rem}
+.step-n{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--green);letter-spacing:0.1em;padding-top:3px;opacity:0.7}
+.step-body h3{font-size:1rem;font-weight:500;margin-bottom:0.4rem}
+.step-body p{font-size:0.85rem;color:rgba(232,237,245,0.45);line-height:1.7}
+.step-time{display:inline-block;margin-top:0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--green);border:1px solid var(--border2);padding:2px 8px}
+
+.how-terminal{background:var(--bg);border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;padding:1.5rem;position:sticky;top:7rem}
+.term-bar{display:flex;align-items:center;gap:6px;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.term-title{font-size:0.58rem;color:var(--gray);margin-left:auto;letter-spacing:0.12em}
+.term-line{margin:4px 0;line-height:1.7;color:rgba(232,237,245,0.4)}
+.term-line .cmd{color:var(--green)}.term-line .out{color:rgba(232,237,245,0.65)}.term-line .warn{color:#FFD60A}.term-line .ok{color:var(--green)}.term-line .err{color:var(--red)}.term-line .dim{color:rgba(232,237,245,0.2)}
+.term-prompt{color:var(--green);margin-right:6px}
+
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;margin-top:3.5rem;background:var(--border)}
+.cmp-col{background:var(--bg);padding:2rem}
+.cmp-col.ours{background:var(--bg3);border-top:2px solid var(--green)}
+.cmp-head{margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border)}
+.cmp-head h3{font-size:0.95rem;font-weight:500;margin-bottom:0.2rem}
+.cmp-head p{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--gray);letter-spacing:0.05em}
+.cmp-col.ours .cmp-head h3{color:var(--green)}
+.cmp-rows{display:flex;flex-direction:column;gap:1rem}
+.cmp-item-label{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:3px}
+.cmp-item-val{font-size:0.88rem;color:rgba(232,237,245,0.5)}
+.cmp-col.ours .cmp-item-val{color:var(--green)}
+.cmp-bad{color:rgba(255,45,85,0.8) !important}
+
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;margin-top:3.5rem;background:var(--border)}
+.price-card{background:var(--bg);padding:2.5rem}
+.price-card.feat{background:var(--bg3);border-top:2px solid var(--green)}
+.price-badge{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;padding:3px 10px;border:1px solid var(--border2);color:var(--green);display:inline-block;margin-bottom:1.5rem}
+.price-amount{display:flex;align-items:baseline;gap:6px;margin-bottom:0.4rem}
+.price-amount .cur{font-size:1rem;color:var(--gray);margin-top:8px}
+.price-amount .amt{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--white);line-height:1}
+.price-amount .per{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--gray)}
+.price-card h3{font-size:1rem;font-weight:500;margin-bottom:0.3rem}
+.price-card .desc{font-size:0.82rem;color:rgba(232,237,245,0.4);margin-bottom:1.8rem;line-height:1.65}
+.price-list{list-style:none;display:flex;flex-direction:column;gap:0.55rem;margin-bottom:2rem}
+.price-list li{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(232,237,245,0.45);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.price-list li::before{content:'>';color:var(--green);flex-shrink:0}
+.price-cta{display:block;text-align:center;padding:0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:1px solid var(--border2);color:var(--gray);transition:all .2s}
+.price-cta:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,148,0.03)}
+.price-card.feat .price-cta{background:var(--green);color:#050810;border-color:var(--green);font-weight:700}
+.price-card.feat .price-cta:hover{background:var(--green-dim)}
+
+.clients-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;margin-top:3.5rem;background:var(--border)}
+.client-card{background:var(--bg);padding:2rem;transition:background .2s}
+.client-card:hover{background:var(--bg3)}
+.client-sector{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green);margin-bottom:0.8rem;opacity:0.7}
+.client-card h3{font-size:1.05rem;font-weight:500;margin-bottom:0.5rem}
+.client-card p{font-size:0.84rem;color:rgba(232,237,245,0.4);line-height:1.7}
+.client-reg{margin-top:1rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--green);border:1px solid var(--border2);padding:3px 8px;display:inline-block}
+
+.cta-section{text-align:center;padding:8rem 3rem;border-top:1px solid var(--border);position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,148,0.04) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.cta-section h2{font-size:clamp(3rem,7vw,6rem);margin-bottom:1rem;position:relative}
+.cta-section p{font-size:0.95rem;color:rgba(232,237,245,0.4);max-width:420px;margin:0 auto 3rem;line-height:1.8;position:relative}
+
+footer{padding:2.5rem 3rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;position:relative;z-index:1}
+footer p{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;color:var(--gray)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .35s ease forwards}
+
+@media(max-width:900px){
+  .hero-code{display:none}.how-grid{grid-template-columns:1fr}.cmp-grid{grid-template-columns:1fr}
+  nav{padding:1rem 1.5rem}nav ul{display:none}
+  section{padding:4rem 1.5rem}.stats{padding:2rem 1.5rem}.hero{padding:7rem 1.5rem 4rem}
+  .lang-bar{top:auto;bottom:0;right:0;left:0;justify-content:center;background:rgba(5,8,16,0.95);border-top:1px solid var(--border);padding:8px}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur2"></div>
+<div class="scanline"></div>
+
+<!-- LANGUAGE SWITCHER -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('es')">ES</button>
+  <button class="lang-btn" onclick="setLang('pt')">PT</button>
+  <button class="lang-btn" onclick="setLang('fr')">FR</button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <span class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L22 7V17L12 22L2 17V7L12 2Z" stroke="#00FF94" stroke-width="1.5"/><path d="M12 2L12 22" stroke="#00FF94" stroke-width="1" opacity="0.4"/><path d="M9 6L15 18" stroke="#00FF94" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </span>
+    PentMind
+  </a>
+  <ul>
+    <li><a href="#how" data-i18n="nav_how">How it works</a></li>
+    <li><a href="#pricing" data-i18n="nav_pricing">Pricing</a></li>
+    <li><a href="#compliance" data-i18n="nav_compliance">Compliance</a></li>
+    <li><a href="#contact" class="nav-cta" data-i18n="nav_cta">Get started →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-terminal">
+    <span class="terminal-dot"></span>
+    pentmind.ai — v1.0.0 — Buenos Aires, Argentina<span class="cursor-blink">_</span>
+  </div>
+  <h1>THE <span class="accent">MIND</span><br>BEHIND<br>THE MACHINE</h1>
+  <p class="hero-sub" data-i18n="hero_sub"></p>
+  <div class="hero-actions">
+    <a href="#contact" class="btn-primary" onclick="showForm(event)">
+      <span data-i18n="hero_cta_primary">Start free assessment</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <a href="#how" class="btn-ghost" data-i18n="hero_cta_ghost">See how it works</a>
+  </div>
+  <div class="hero-code">
+    <div class="code-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span><span class="code-title">pentmind — scan session</span></div>
+    <div class="code-line"><span class="p">$</span><span class="typing"> pentmind scan --target acme-fintech.com</span></div>
+    <div class="code-line"><span class="c">// initializing AI recon engine...</span></div>
+    <div class="code-line"><span class="c">// surface: 3 domains, 12 endpoints</span></div>
+    <div class="code-line">&nbsp;</div>
+    <div class="code-line"><span class="g typing2"> [+] CVE-2024-1182 found — SQLi (critical)</span></div>
+    <div class="code-line"><span class="g"> [+] auth bypass via JWT — high</span></div>
+    <div class="code-line"><span class="g"> [+] exposed .env file — critical</span></div>
+    <div class="code-line">&nbsp;</div>
+    <div class="code-line"><span class="p">$</span><span class="typing3"> pentmind validate --human-review</span></div>
+    <div class="code-line"><span class="c">// expert review: 3 confirmed, 0 false positives</span></div>
+    <div class="code-line"><span class="g"> [✓] report ready — executive summary</span></div>
+    <div class="code-line">&nbsp;</div>
+    <div class="code-line"><span class="p">$</span><span class="cursor-blink" style="color:var(--green)">_</span></div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><span class="stat-n">6 min</span><span class="stat-l" data-i18n="stat1">First vulnerability found</span></div>
+  <div class="stat"><span class="stat-n">~0%</span><span class="stat-l" data-i18n="stat2">False positives</span></div>
+  <div class="stat"><span class="stat-n">85%</span><span class="stat-l" data-i18n="stat3">Cost reduction</span></div>
+  <div class="stat"><span class="stat-n">24/7</span><span class="stat-l" data-i18n="stat4">Continuous monitoring</span></div>
+  <div class="stat"><span class="stat-n">BCRA</span><span class="stat-l" data-i18n="stat5">Com. A 8398 compliant</span></div>
+</div>
+
+<!-- PROBLEM -->
+<section>
+  <div class="tag" data-i18n="prob_tag">The problem</div>
+  <h2 data-i18n="prob_title">Traditional pentesting<br>is broken</h2>
+  <div class="prob-grid">
+    <div class="prob-card"><div class="prob-num">01 / 03</div><h3 data-i18n="prob1_title">Too slow</h3><p data-i18n="prob1_body"></p><div class="prob-bg-num">01</div></div>
+    <div class="prob-card"><div class="prob-num">02 / 03</div><h3 data-i18n="prob2_title">Too expensive</h3><p data-i18n="prob2_body"></p><div class="prob-bg-num">02</div></div>
+    <div class="prob-card"><div class="prob-num">03 / 03</div><h3 data-i18n="prob3_title">Attackers use AI now</h3><p data-i18n="prob3_body"></p><div class="prob-bg-num">03</div></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="how-section" id="how">
+  <div class="tag" data-i18n="how_tag">The process</div>
+  <h2 data-i18n="how_title">Machine to boardroom<br>in 4 steps</h2>
+  <div class="how-grid">
+    <div class="how-steps">
+      <div class="how-step"><div class="step-n">01/04</div><div class="step-body"><h3 data-i18n="step1_title">AI Discovery</h3><p data-i18n="step1_body"></p><span class="step-time">// <span data-i18n="step1_time">hours</span></span></div></div>
+      <div class="how-step"><div class="step-n">02/04</div><div class="step-body"><h3 data-i18n="step2_title">Autonomous exploitation</h3><p data-i18n="step2_body"></p><span class="step-time">// <span data-i18n="step2_time">hours</span></span></div></div>
+      <div class="how-step"><div class="step-n">03/04</div><div class="step-body"><h3 data-i18n="step3_title">Human validation</h3><p data-i18n="step3_body"></p><span class="step-time">// <span data-i18n="step3_time">1–2 days</span></span></div></div>
+      <div class="how-step"><div class="step-n">04/04</div><div class="step-body"><h3 data-i18n="step4_title">Executive report</h3><p data-i18n="step4_body"></p><span class="step-time">// <span data-i18n="step4_time">immediate delivery</span></span></div></div>
+    </div>
+    <div class="how-terminal">
+      <div class="term-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span><span class="term-title">live session log</span></div>
+      <div class="term-line"><span class="term-prompt">›</span><span class="cmd">recon --target api.acmefintech.com</span></div>
+      <div class="term-line"><span class="out">  scanning 847 endpoints...</span></div>
+      <div class="term-line"><span class="ok">  [+] subdomain takeover risk detected</span></div>
+      <div class="term-line"><span class="ok">  [+] 3 exposed API keys in JS bundle</span></div>
+      <div class="term-line">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">›</span><span class="cmd">exploit --mode autonomous</span></div>
+      <div class="term-line"><span class="err">  [!] SQL injection confirmed</span></div>
+      <div class="term-line"><span class="err">  [!] auth bypass via JWT — exploitable</span></div>
+      <div class="term-line"><span class="warn">  [~] rate limit bypass — low confidence</span></div>
+      <div class="term-line">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">›</span><span class="cmd">validate --human-review on</span></div>
+      <div class="term-line"><span class="ok">  [✓] 2 critical confirmed</span></div>
+      <div class="term-line"><span class="dim">  [x] rate limit: false positive — discarded</span></div>
+      <div class="term-line">&nbsp;</div>
+      <div class="term-line"><span class="term-prompt">›</span><span class="cmd">report --format executive</span></div>
+      <div class="term-line"><span class="ok">  [✓] report generated — 0 false positives</span></div>
+      <div class="term-line"><span class="term-prompt">›</span><span class="cursor-blink" style="color:var(--green)">_</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section>
+  <div class="tag" data-i18n="why_tag">Why PentMind</div>
+  <h2 data-i18n="why_title">Not just faster.<br>Actually better.</h2>
+  <div class="cmp-grid">
+    <div class="cmp-col">
+      <div class="cmp-head"><h3 data-i18n="cmp1_title">Traditional pentesting</h3><p data-i18n="cmp1_sub">legacy consultants</p></div>
+      <div class="cmp-rows">
+        <div><div class="cmp-item-label" data-i18n="cmp_speed">Speed</div><div class="cmp-item-val" data-i18n="cmp1_speed">Weeks to months</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cost">Cost</div><div class="cmp-item-val">USD 15k–40k / cycle</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_fp">False positives</div><div class="cmp-item-val" data-i18n="cmp1_fp">Few (if expert)</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cont">Continuity</div><div class="cmp-item-val" data-i18n="cmp1_cont">1–2x per year</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_logic">Business logic</div><div class="cmp-item-val" data-i18n="cmp1_logic">Depends on pentester</div></div>
+      </div>
+    </div>
+    <div class="cmp-col">
+      <div class="cmp-head"><h3 data-i18n="cmp2_title">100% autonomous AI</h3><p data-i18n="cmp2_sub">automated tools only</p></div>
+      <div class="cmp-rows">
+        <div><div class="cmp-item-label" data-i18n="cmp_speed">Speed</div><div class="cmp-item-val" data-i18n="cmp2_speed">Very fast (minutes)</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cost">Cost</div><div class="cmp-item-val" data-i18n="cmp2_cost">Low</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_fp">False positives</div><div class="cmp-item-val cmp-bad" data-i18n="cmp2_fp">Up to 18% — massive noise</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cont">Continuity</div><div class="cmp-item-val" data-i18n="cmp2_cont">Continuous</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_logic">Business logic</div><div class="cmp-item-val cmp-bad" data-i18n="cmp2_logic">Blind to context</div></div>
+      </div>
+    </div>
+    <div class="cmp-col ours">
+      <div class="cmp-head"><h3>PentMind</h3><p data-i18n="cmp3_sub">hybrid — best of both</p></div>
+      <div class="cmp-rows">
+        <div><div class="cmp-item-label" data-i18n="cmp_speed">Speed</div><div class="cmp-item-val" data-i18n="cmp3_speed">Fast + validated (days)</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cost">Cost</div><div class="cmp-item-val" data-i18n="cmp3_cost">Mid — best value</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_fp">False positives</div><div class="cmp-item-val">~0%</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_cont">Continuity</div><div class="cmp-item-val" data-i18n="cmp3_cont">24/7 continuous</div></div>
+        <div><div class="cmp-item-label" data-i18n="cmp_logic">Business logic</div><div class="cmp-item-val" data-i18n="cmp3_logic">Yes — human context</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLIANCE -->
+<section id="compliance" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="tag" data-i18n="comp_tag">Regulatory compliance</div>
+  <h2 data-i18n="comp_title">Your regulators<br>already require this</h2>
+  <div class="clients-grid" style="margin-top:3.5rem">
+    <div class="client-card"><div class="client-sector" data-i18n="comp1_sector">Financial sector</div><h3 data-i18n="comp1_title">Banks & Fintechs</h3><p data-i18n="comp1_body"></p><span class="client-reg">BCRA A 8398</span></div>
+    <div class="client-card"><div class="client-sector" data-i18n="comp2_sector">Capital markets</div><h3 data-i18n="comp2_title">Brokers & ALyC</h3><p data-i18n="comp2_body"></p><span class="client-reg">CNV RG 939</span></div>
+    <div class="client-card"><div class="client-sector" data-i18n="comp3_sector">E-commerce & retail</div><h3 data-i18n="comp3_title">Card processing</h3><p data-i18n="comp3_body"></p><span class="client-reg">PCI-DSS v4.0</span></div>
+    <div class="client-card"><div class="client-sector" data-i18n="comp4_sector">Data & privacy</div><h3 data-i18n="comp4_title">Any company with data</h3><p data-i18n="comp4_body"></p><span class="client-reg">Ley 25.326</span></div>
+    <div class="client-card"><div class="client-sector" data-i18n="comp5_sector">Public sector</div><h3 data-i18n="comp5_title">Government entities</h3><p data-i18n="comp5_body"></p><span class="client-reg">Decreto 1390/2023</span></div>
+    <div class="client-card"><div class="client-sector" data-i18n="comp6_sector">SaaS / Tech</div><h3 data-i18n="comp6_title">Companies selling abroad</h3><p data-i18n="comp6_body"></p><span class="client-reg">SOC 2 · ISO 27001</span></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="tag" data-i18n="price_tag">Pricing</div>
+  <h2 data-i18n="price_title">Simple pricing.<br>No surprises.</h2>
+  <div class="price-grid">
+    <div class="price-card">
+      <div class="price-badge" data-i18n="price1_badge">One-time project</div>
+      <div class="price-amount"><span class="cur">USD</span><span class="amt">3500</span><span class="per" data-i18n="price1_per">/ project</span></div>
+      <h3 data-i18n="price1_title">Point-in-time audit</h3>
+      <p class="desc" data-i18n="price1_desc"></p>
+      <ul class="price-list" id="price1_list"></ul>
+      <a href="#contact" class="price-cta" onclick="showForm(event)" data-i18n="price1_cta">Get a quote →</a>
+    </div>
+    <div class="price-card feat">
+      <div class="price-badge" data-i18n="price2_badge">Monthly retainer</div>
+      <div class="price-amount"><span class="cur">USD</span><span class="amt">2200</span><span class="per" data-i18n="price2_per">/ month</span></div>
+      <h3 data-i18n="price2_title">Continuous security</h3>
+      <p class="desc" data-i18n="price2_desc"></p>
+      <ul class="price-list" id="price2_list"></ul>
+      <a href="#contact" class="price-cta" onclick="showForm(event)" data-i18n="price2_cta">Start now →</a>
+    </div>
+    <div class="price-card">
+      <div class="price-badge" data-i18n="price3_badge">Enterprise</div>
+      <div class="price-amount"><span class="amt" style="font-size:2.5rem;padding-top:.4rem" data-i18n="price3_amt">Custom</span></div>
+      <h3 data-i18n="price3_title">Large organizations</h3>
+      <p class="desc" data-i18n="price3_desc"></p>
+      <ul class="price-list" id="price3_list"></ul>
+      <a href="#contact" class="price-cta" onclick="showForm(event)" data-i18n="price3_cta">Talk to an expert →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <h2 data-i18n="cta_title">WHEN WAS YOUR<br>LAST TEST?</h2>
+  <p data-i18n="cta_sub"></p>
+  <a href="#contact-form" class="btn-primary" style="display:inline-flex" onclick="showForm(event)">
+    <span data-i18n="cta_btn">Book free assessment</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="logo" style="font-size:.9rem">
+    <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L22 7V17L12 22L2 17V7L12 2Z" stroke="#00FF94" stroke-width="1.5"/><path d="M9 6L15 18" stroke="#00FF94" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+    PentMind.ai
+  </a>
+  <p>© 2025 PentMind · Buenos Aires, Argentina</p>
+  <p>OWASP Top 10 · ISO 27001 · BCRA Com. A 8398 · PCI-DSS v4.0</p>
+</footer>
+
+<script>
+const T = {
+  en: {
+    nav_how:"How it works", nav_pricing:"Pricing", nav_compliance:"Compliance", nav_cta:"Get started →",
+    hero_sub:"AI-powered pentesting with <strong>human judgment</strong>.<br>We find your critical vulnerabilities before attackers do — faster, cheaper, and with zero noise.",
+    hero_cta_primary:"Start free assessment", hero_cta_ghost:"See how it works",
+    stat1:"First vulnerability found", stat2:"False positives", stat3:"Cost reduction vs traditional", stat4:"Continuous monitoring", stat5:"Com. A 8398 compliant",
+    prob_tag:"The problem", prob_title:"Traditional pentesting<br>is broken",
+    prob1_title:"Too slow", prob1_body:"Traditional audits take months. By the time the report lands, your codebase has changed three times. Security snapshots don't protect dynamic systems.",
+    prob2_title:"Too expensive", prob2_body:"USD 15k–40k per cycle from legacy consultants. A price that excludes most companies — leaving the gap wide open for attackers.",
+    prob3_title:"Attackers use AI now", prob3_body:"WormGPT, FraudGPT, autonomous exploit tools. 94% of companies are not prepared. Your defense needs to match the offense.",
+    how_tag:"The process", how_title:"Machine to boardroom<br>in 4 steps",
+    step1_title:"AI Discovery", step1_body:"Our AI engine maps your entire digital surface — web, APIs, mobile, cloud infrastructure. No limits, no fatigue.", step1_time:"hours",
+    step2_title:"Autonomous exploitation", step2_body:"The AI attempts to exploit every vector, generating automated proof-of-concept attacks. No human in the loop at this stage.", step2_time:"hours",
+    step3_title:"Human validation", step3_body:"Our certified experts review every finding. They eliminate noise, add business context, and surface the logic flaws AI can't see.", step3_time:"1–2 days",
+    step4_title:"Executive report", step4_body:"Not 500 pages. A concise brief with your top 5 risks, their business impact in dollars, and a prioritized remediation plan.", step4_time:"immediate delivery",
+    why_tag:"Why PentMind", why_title:"Not just faster.<br>Actually better.",
+    cmp1_title:"Traditional pentesting", cmp1_sub:"legacy consultants", cmp2_title:"100% autonomous AI", cmp2_sub:"automated tools only", cmp3_sub:"hybrid — best of both",
+    cmp_speed:"Speed", cmp_cost:"Cost", cmp_fp:"False positives", cmp_cont:"Continuity", cmp_logic:"Business logic",
+    cmp1_speed:"Weeks to months", cmp1_fp:"Few (if expert)", cmp1_cont:"1–2x per year", cmp1_logic:"Depends on pentester",
+    cmp2_speed:"Very fast (minutes)", cmp2_cost:"Low", cmp2_fp:"Up to 18% — massive noise", cmp2_cont:"Continuous", cmp2_logic:"Blind to context",
+    cmp3_speed:"Fast + validated (days)", cmp3_cost:"Mid — best value", cmp3_cont:"24/7 continuous", cmp3_logic:"Yes — human context",
+    comp_tag:"Regulatory compliance", comp_title:"Your regulators<br>already require this",
+    comp1_sector:"Financial sector", comp1_title:"Banks & Fintechs", comp1_body:"BCRA Communication A 8398 requires documented penetration testing for all entities under central bank supervision.",
+    comp2_sector:"Capital markets", comp2_title:"Brokers & ALyC", comp2_body:"CNV General Resolution 939/2022 mandates cybersecurity plans with technical testing for all capital market participants.",
+    comp3_sector:"E-commerce & retail", comp3_title:"Card processing", comp3_body:"Any business processing credit or debit cards must undergo annual pentesting under PCI-DSS v4.0. Required by Visa and Mastercard.",
+    comp4_sector:"Data & privacy", comp4_title:"Any company with data", comp4_body:"Law 25.326 requires technical security measures for all personal data processors. A breach without prior pentesting means direct liability.",
+    comp5_sector:"Public sector", comp5_title:"Government entities", comp5_body:"Decree 1390/2023 (CNC) and Resolution JGM 1523/2019 mandate NIST framework compliance across the National Public Administration.",
+    comp6_sector:"SaaS / Tech", comp6_title:"Companies selling abroad", comp6_body:"SOC 2 and ISO 27001 certifications — required by US and EU clients — mandate pentesting as a core control.",
+    price_tag:"Pricing", price_title:"Simple pricing.<br>No surprises.",
+    price1_badge:"One-time project", price1_per:"/ project", price1_title:"Point-in-time audit", price1_desc:"For companies that need a focused audit of a specific asset. Ideal as a first engagement.", price1_cta:"Get a quote →",
+    price1_items:["Up to 3 assets (web / API / mobile)","Executive + technical report","1 walkthrough session","30-day post-delivery support","Regulatory compliance documentation"],
+    price2_badge:"Monthly retainer", price2_per:"/ month", price2_title:"Continuous security", price2_desc:"Always-on monitoring + monthly report. Recommended for fintechs and companies with frequent deploys.", price2_cta:"Start now →",
+    price2_items:["24/7 continuous scanning","Monthly executive report","Immediate critical alerts","BCRA compliance included","Up to 10 active assets","Dedicated expert contact"],
+    price3_badge:"Enterprise", price3_amt:"Custom", price3_title:"Large organizations", price3_desc:"Complex infrastructure, multiple sites, sector regulations. Custom scoping and pricing.", price3_cta:"Talk to an expert →",
+    price3_items:["Unlimited attack surface","SOC integration","Guaranteed SLA","ISO 27001 alignment","Internal team training","Quarterly executive briefing"],
+    cta_title:"WHEN WAS YOUR<br>LAST TEST?", cta_sub:"If you can't answer precisely, that's already an answer. Book a free 30-minute security assessment.", cta_btn:"Book free assessment"
+  },
+  es: {
+    nav_how:"Cómo funciona", nav_pricing:"Precios", nav_compliance:"Cumplimiento", nav_cta:"Empezar →",
+    hero_sub:"Pentesting potenciado por <strong>IA con criterio humano</strong>.<br>Encontramos tus vulnerabilidades críticas antes que los atacantes — más rápido, más barato y sin ruido.",
+    hero_cta_primary:"Diagnóstico gratuito", hero_cta_ghost:"¿Cómo funciona?",
+    stat1:"Primera vulnerabilidad encontrada", stat2:"Falsos positivos", stat3:"Reducción de costo vs. tradicional", stat4:"Monitoreo continuo", stat5:"Cumplimiento Com. A 8398",
+    prob_tag:"El problema", prob_title:"El pentesting tradicional<br>ya no alcanza",
+    prob1_title:"Demasiado lento", prob1_body:"Las auditorías tradicionales tardan meses. Cuando el informe llega, el código ya cambió tres veces. Una foto fija no protege sistemas dinámicos.",
+    prob2_title:"Demasiado caro", prob2_body:"USD 15k–40k por ciclo con consultoras legacy. Un precio que excluye a la mayoría de las empresas — dejando la brecha abierta para los atacantes.",
+    prob3_title:"Los atacantes ya usan IA", prob3_body:"WormGPT, FraudGPT, herramientas de explotación autónoma. El 94% de las empresas no está preparado. Tu defensa debe estar a la altura.",
+    how_tag:"El proceso", how_title:"De la máquina a tu mesa chica<br>en 4 pasos",
+    step1_title:"Descubrimiento con IA", step1_body:"Nuestro motor de IA mapea toda tu superficie digital — web, APIs, móvil, infraestructura cloud. Sin límites ni fatiga.", step1_time:"horas",
+    step2_title:"Explotación autónoma", step2_body:"La IA intenta explotar cada vector, generando pruebas de concepto automáticas. Sin intervención humana en esta etapa.", step2_time:"horas",
+    step3_title:"Validación humana", step3_body:"Nuestros expertos certificados revisan cada hallazgo. Eliminan ruido, agregan contexto de negocio y detectan los fallos lógicos que la IA no ve.", step3_time:"1–2 días",
+    step4_title:"Informe ejecutivo", step4_body:"No 500 páginas. Un resumen con tus 5 riesgos principales, su impacto en pesos y un plan de remediación priorizado.", step4_time:"entrega inmediata",
+    why_tag:"Por qué PentMind", why_title:"No solo más rápido.<br>Genuinamente mejor.",
+    cmp1_title:"Pentesting tradicional", cmp1_sub:"consultoras legacy", cmp2_title:"IA 100% autónoma", cmp2_sub:"solo herramientas automatizadas", cmp3_sub:"híbrido — lo mejor de los dos",
+    cmp_speed:"Velocidad", cmp_cost:"Costo", cmp_fp:"Falsos positivos", cmp_cont:"Continuidad", cmp_logic:"Lógica de negocio",
+    cmp1_speed:"Semanas o meses", cmp1_fp:"Pocos (si es experto)", cmp1_cont:"1–2 veces al año", cmp1_logic:"Depende del pentester",
+    cmp2_speed:"Muy rápida (minutos)", cmp2_cost:"Bajo", cmp2_fp:"Hasta 18% — ruido masivo", cmp2_cont:"Continua", cmp2_logic:"Ciega al contexto",
+    cmp3_speed:"Rápida + validada (días)", cmp3_cost:"Medio — mejor valor", cmp3_cont:"24/7 continuo", cmp3_logic:"Sí — contexto humano",
+    comp_tag:"Cumplimiento normativo", comp_title:"Tus reguladores<br>ya lo exigen",
+    comp1_sector:"Sector financiero", comp1_title:"Bancos y Fintechs", comp1_body:"La Comunicación BCRA A 8398 exige pruebas de intrusión documentadas para todas las entidades bajo supervisión del banco central.",
+    comp2_sector:"Mercado de capitales", comp2_title:"Brokers y ALyC", comp2_body:"La Resolución General CNV 939/2022 requiere planes de ciberseguridad con pruebas técnicas para todos los participantes del mercado.",
+    comp3_sector:"E-commerce y retail", comp3_title:"Procesamiento de tarjetas", comp3_body:"Toda empresa que procese tarjetas debe realizar pentesting anual bajo PCI-DSS v4.0. Lo exigen Visa y Mastercard.",
+    comp4_sector:"Datos y privacidad", comp4_title:"Cualquier empresa con datos", comp4_body:"La Ley 25.326 exige medidas técnicas de seguridad para todo procesador de datos personales. Una brecha sin pentesting previo implica responsabilidad directa.",
+    comp5_sector:"Sector público", comp5_title:"Organismos del Estado", comp5_body:"El Decreto 1390/2023 (CNC) y la Resolución JGM 1523/2019 exigen cumplimiento del marco NIST en toda la Administración Pública Nacional.",
+    comp6_sector:"SaaS / Tech", comp6_title:"Empresas que exportan", comp6_body:"Las certificaciones SOC 2 e ISO 27001 — requeridas por clientes de EE.UU. y Europa — incluyen el pentesting como control obligatorio.",
+    price_tag:"Precios", price_title:"Precios simples.<br>Sin sorpresas.",
+    price1_badge:"Proyecto único", price1_per:"/ proyecto", price1_title:"Auditoría puntual", price1_desc:"Para empresas que necesitan una auditoría enfocada en un activo específico. Ideal como primer servicio.", price1_cta:"Solicitar cotización →",
+    price1_items:["Hasta 3 activos (web / API / móvil)","Informe ejecutivo + técnico","1 sesión de walkthrough","30 días de soporte post-entrega","Documentación de cumplimiento normativo"],
+    price2_badge:"Retainer mensual", price2_per:"/ mes", price2_title:"Seguridad continua", price2_desc:"Monitoreo permanente + informe mensual. Recomendado para fintechs y empresas con deploys frecuentes.", price2_cta:"Empezar ahora →",
+    price2_items:["Escaneo continuo 24/7","Informe ejecutivo mensual","Alertas críticas inmediatas","Cumplimiento BCRA incluido","Hasta 10 activos activos","Contacto experto dedicado"],
+    price3_badge:"Enterprise", price3_amt:"A medida", price3_title:"Grandes organizaciones", price3_desc:"Infraestructura compleja, múltiples sedes, regulaciones sectoriales. Alcance y precio personalizado.", price3_cta:"Hablar con un experto →",
+    price3_items:["Superficie de ataque ilimitada","Integración con tu SOC","SLA garantizado","Alineación ISO 27001","Capacitación al equipo interno","Briefing ejecutivo trimestral"],
+    cta_title:"¿CUÁNDO FUE<br>TU ÚLTIMO TEST?", cta_sub:"Si no podés responderlo con exactitud, eso ya es una respuesta. Agendá un diagnóstico gratuito de 30 minutos.", cta_btn:"Agendar diagnóstico gratuito"
+  },
+  pt: {
+    nav_how:"Como funciona", nav_pricing:"Preços", nav_compliance:"Conformidade", nav_cta:"Começar →",
+    hero_sub:"Pentesting com <strong>IA e julgamento humano</strong>.<br>Encontramos suas vulnerabilidades críticas antes dos atacantes — mais rápido, mais barato e sem ruído.",
+    hero_cta_primary:"Diagnóstico gratuito", hero_cta_ghost:"Como funciona?",
+    stat1:"Primeira vulnerabilidade encontrada", stat2:"Falsos positivos", stat3:"Redução de custo vs. tradicional", stat4:"Monitoramento contínuo", stat5:"Conformidade BCRA A 8398",
+    prob_tag:"O problema", prob_title:"O pentesting tradicional<br>está quebrado",
+    prob1_title:"Lento demais", prob1_body:"Auditorias tradicionais levam meses. Quando o relatório chega, o código já mudou três vezes. Fotos estáticas não protegem sistemas dinâmicos.",
+    prob2_title:"Caro demais", prob2_body:"USD 15k–40k por ciclo com consultorias legadas. Um preço que exclui a maioria das empresas — deixando a brecha aberta para os atacantes.",
+    prob3_title:"Atacantes usam IA agora", prob3_body:"WormGPT, FraudGPT, ferramentas de exploração autônoma. 94% das empresas não estão preparadas. Sua defesa precisa acompanhar o ataque.",
+    how_tag:"O processo", how_title:"Da máquina para a diretoria<br>em 4 passos",
+    step1_title:"Descoberta com IA", step1_body:"Nosso motor de IA mapeia toda a sua superfície digital — web, APIs, mobile, cloud. Sem limites, sem fadiga.", step1_time:"horas",
+    step2_title:"Exploração autônoma", step2_body:"A IA tenta explorar cada vetor, gerando provas de conceito automatizadas. Sem humano no loop nesta etapa.", step2_time:"horas",
+    step3_title:"Validação humana", step3_body:"Nossos especialistas certificados revisam cada achado. Eliminam ruído, adicionam contexto de negócio e detectam falhas lógicas que a IA não vê.", step3_time:"1–2 dias",
+    step4_title:"Relatório executivo", step4_body:"Não 500 páginas. Um resumo com seus 5 principais riscos, impacto financeiro e um plano de remediação priorizado.", step4_time:"entrega imediata",
+    why_tag:"Por que PentMind", why_title:"Não só mais rápido.<br>Genuinamente melhor.",
+    cmp1_title:"Pentesting tradicional", cmp1_sub:"consultorias legadas", cmp2_title:"IA 100% autônoma", cmp2_sub:"ferramentas automatizadas", cmp3_sub:"híbrido — o melhor dos dois",
+    cmp_speed:"Velocidade", cmp_cost:"Custo", cmp_fp:"Falsos positivos", cmp_cont:"Continuidade", cmp_logic:"Lógica de negócio",
+    cmp1_speed:"Semanas ou meses", cmp1_fp:"Poucos (se expert)", cmp1_cont:"1–2 vezes por ano", cmp1_logic:"Depende do pentester",
+    cmp2_speed:"Muito rápida (minutos)", cmp2_cost:"Baixo", cmp2_fp:"Até 18% — ruído massivo", cmp2_cont:"Contínua", cmp2_logic:"Cega ao contexto",
+    cmp3_speed:"Rápida + validada (dias)", cmp3_cost:"Médio — melhor valor", cmp3_cont:"24/7 contínuo", cmp3_logic:"Sim — contexto humano",
+    comp_tag:"Conformidade regulatória", comp_title:"Seus reguladores<br>já exigem isso",
+    comp1_sector:"Setor financeiro", comp1_title:"Bancos e Fintechs", comp1_body:"A Comunicação BCRA A 8398 exige testes de intrusão documentados para todas as entidades sob supervisão do banco central.",
+    comp2_sector:"Mercado de capitais", comp2_title:"Corretoras e ALyC", comp2_body:"A Resolução CNV 939/2022 exige planos de cibersegurança com testes técnicos para todos os participantes do mercado.",
+    comp3_sector:"E-commerce e varejo", comp3_title:"Processamento de cartões", comp3_body:"Toda empresa que processa cartões deve realizar pentesting anual sob PCI-DSS v4.0. Exigido por Visa e Mastercard.",
+    comp4_sector:"Dados e privacidade", comp4_title:"Qualquer empresa com dados", comp4_body:"A Lei 25.326 exige medidas técnicas de segurança para todo processador de dados pessoais. Uma brecha sem pentesting implica responsabilidade direta.",
+    comp5_sector:"Setor público", comp5_title:"Entidades governamentais", comp5_body:"O Decreto 1390/2023 (CNC) e a Resolução JGM 1523/2019 exigem conformidade com o framework NIST na Administração Pública.",
+    comp6_sector:"SaaS / Tech", comp6_title:"Empresas que exportam", comp6_body:"Certificações SOC 2 e ISO 27001 — exigidas por clientes dos EUA e Europa — incluem pentesting como controle obrigatório.",
+    price_tag:"Preços", price_title:"Preços simples.<br>Sem surpresas.",
+    price1_badge:"Projeto único", price1_per:"/ projeto", price1_title:"Auditoria pontual", price1_desc:"Para empresas que precisam de uma auditoria focada em um ativo específico. Ideal como primeiro serviço.", price1_cta:"Solicitar orçamento →",
+    price1_items:["Até 3 ativos (web / API / mobile)","Relatório executivo + técnico","1 sessão de walkthrough","30 dias de suporte pós-entrega","Documentação de conformidade"],
+    price2_badge:"Retainer mensal", price2_per:"/ mês", price2_title:"Segurança contínua", price2_desc:"Monitoramento permanente + relatório mensal. Recomendado para fintechs e empresas com deploys frequentes.", price2_cta:"Começar agora →",
+    price2_items:["Varredura contínua 24/7","Relatório executivo mensal","Alertas críticos imediatos","Conformidade BCRA incluída","Até 10 ativos ativos","Contato especialista dedicado"],
+    price3_badge:"Enterprise", price3_amt:"Personalizado", price3_title:"Grandes organizações", price3_desc:"Infraestrutura complexa, múltiplos sites, regulações setoriais. Escopo e preço personalizados.", price3_cta:"Falar com especialista →",
+    price3_items:["Superfície de ataque ilimitada","Integração SOC","SLA garantido","Alinhamento ISO 27001","Treinamento da equipe interna","Briefing executivo trimestral"],
+    cta_title:"QUANDO FOI<br>SEU ÚLTIMO TESTE?", cta_sub:"Se você não consegue responder com precisão, isso já é uma resposta. Agende um diagnóstico gratuito de 30 minutos.", cta_btn:"Agendar diagnóstico gratuito"
+  },
+  fr: {
+    nav_how:"Comment ça marche", nav_pricing:"Tarifs", nav_compliance:"Conformité", nav_cta:"Commencer →",
+    hero_sub:"Pentesting propulsé par <strong>l'IA avec jugement humain</strong>.<br>Nous trouvons vos vulnérabilités critiques avant les attaquants — plus vite, moins cher, sans bruit.",
+    hero_cta_primary:"Diagnostic gratuit", hero_cta_ghost:"Comment ça marche ?",
+    stat1:"Première vulnérabilité trouvée", stat2:"Faux positifs", stat3:"Réduction des coûts vs. traditionnel", stat4:"Surveillance continue", stat5:"Conforme BCRA A 8398",
+    prob_tag:"Le problème", prob_title:"Le pentesting traditionnel<br>est dépassé",
+    prob1_title:"Trop lent", prob1_body:"Les audits traditionnels prennent des mois. Quand le rapport arrive, le code a changé trois fois. Les photos statiques ne protègent pas les systèmes dynamiques.",
+    prob2_title:"Trop cher", prob2_body:"15k–40k USD par cycle chez les consultants traditionnels. Un tarif qui exclut la majorité des entreprises — laissant la brèche ouverte aux attaquants.",
+    prob3_title:"Les attaquants utilisent l'IA", prob3_body:"WormGPT, FraudGPT, outils d'exploitation autonome. 94% des entreprises ne sont pas préparées. Votre défense doit être à la hauteur.",
+    how_tag:"Le processus", how_title:"De la machine à la direction<br>en 4 étapes",
+    step1_title:"Découverte par IA", step1_body:"Notre moteur IA cartographie toute votre surface numérique — web, APIs, mobile, cloud. Sans limites, sans fatigue.", step1_time:"heures",
+    step2_title:"Exploitation autonome", step2_body:"L'IA tente d'exploiter chaque vecteur, générant des preuves de concept automatisées. Sans intervention humaine à cette étape.", step2_time:"heures",
+    step3_title:"Validation humaine", step3_body:"Nos experts certifiés examinent chaque découverte. Ils éliminent le bruit, ajoutent le contexte métier et détectent les failles logiques que l'IA ne voit pas.", step3_time:"1–2 jours",
+    step4_title:"Rapport exécutif", step4_body:"Pas 500 pages. Un résumé avec vos 5 risques principaux, leur impact financier et un plan de remédiation priorisé.", step4_time:"livraison immédiate",
+    why_tag:"Pourquoi PentMind", why_title:"Pas seulement plus rapide.<br>Vraiment meilleur.",
+    cmp1_title:"Pentesting traditionnel", cmp1_sub:"consultants legacy", cmp2_title:"IA 100% autonome", cmp2_sub:"outils automatisés seulement", cmp3_sub:"hybride — le meilleur des deux",
+    cmp_speed:"Vitesse", cmp_cost:"Coût", cmp_fp:"Faux positifs", cmp_cont:"Continuité", cmp_logic:"Logique métier",
+    cmp1_speed:"Semaines ou mois", cmp1_fp:"Peu (si expert)", cmp1_cont:"1–2 fois par an", cmp1_logic:"Dépend du pentester",
+    cmp2_speed:"Très rapide (minutes)", cmp2_cost:"Bas", cmp2_fp:"Jusqu'à 18% — bruit massif", cmp2_cont:"Continue", cmp2_logic:"Aveugle au contexte",
+    cmp3_speed:"Rapide + validé (jours)", cmp3_cost:"Moyen — meilleur rapport qualité/prix", cmp3_cont:"24/7 continu", cmp3_logic:"Oui — contexte humain",
+    comp_tag:"Conformité réglementaire", comp_title:"Vos régulateurs<br>l'exigent déjà",
+    comp1_sector:"Secteur financier", comp1_title:"Banques & Fintechs", comp1_body:"La Communication BCRA A 8398 exige des tests d'intrusion documentés pour toutes les entités sous supervision de la banque centrale.",
+    comp2_sector:"Marchés de capitaux", comp2_title:"Courtiers & ALyC", comp2_body:"La Résolution CNV 939/2022 impose des plans de cybersécurité avec tests techniques pour tous les participants du marché.",
+    comp3_sector:"E-commerce & retail", comp3_title:"Traitement des cartes", comp3_body:"Toute entreprise traitant des cartes bancaires doit effectuer un pentesting annuel selon PCI-DSS v4.0. Exigé par Visa et Mastercard.",
+    comp4_sector:"Données & vie privée", comp4_title:"Toute entreprise avec des données", comp4_body:"La loi 25.326 exige des mesures techniques de sécurité pour tout processeur de données personnelles. Une violation sans pentesting implique une responsabilité directe.",
+    comp5_sector:"Secteur public", comp5_title:"Entités gouvernementales", comp5_body:"Le Décret 1390/2023 (CNC) et la Résolution JGM 1523/2019 imposent la conformité au framework NIST dans toute l'Administration Publique Nationale.",
+    comp6_sector:"SaaS / Tech", comp6_title:"Entreprises exportatrices", comp6_body:"Les certifications SOC 2 et ISO 27001 — exigées par les clients américains et européens — incluent le pentesting comme contrôle obligatoire.",
+    price_tag:"Tarifs", price_title:"Tarification simple.<br>Sans surprises.",
+    price1_badge:"Projet ponctuel", price1_per:"/ projet", price1_title:"Audit ponctuel", price1_desc:"Pour les entreprises qui ont besoin d'un audit ciblé sur un actif spécifique. Idéal comme premier engagement.", price1_cta:"Demander un devis →",
+    price1_items:["Jusqu'à 3 actifs (web / API / mobile)","Rapport exécutif + technique","1 session de présentation","30 jours de support post-livraison","Documentation de conformité réglementaire"],
+    price2_badge:"Retainer mensuel", price2_per:"/ mois", price2_title:"Sécurité continue", price2_desc:"Surveillance permanente + rapport mensuel. Recommandé pour les fintechs et entreprises avec des déploiements fréquents.", price2_cta:"Commencer maintenant →",
+    price2_items:["Scan continu 24/7","Rapport exécutif mensuel","Alertes critiques immédiates","Conformité BCRA incluse","Jusqu'à 10 actifs actifs","Contact expert dédié"],
+    price3_badge:"Enterprise", price3_amt:"Sur mesure", price3_title:"Grandes organisations", price3_desc:"Infrastructure complexe, sites multiples, réglementations sectorielles. Périmètre et tarification personnalisés.", price3_cta:"Parler à un expert →",
+    price3_items:["Surface d'attaque illimitée","Intégration SOC","SLA garanti","Alignement ISO 27001","Formation de l'équipe interne","Briefing exécutif trimestriel"],
+    cta_title:"QUAND ÉTAIT<br>VOTRE DERNIER TEST ?", cta_sub:"Si vous ne pouvez pas répondre précisément, c'est déjà une réponse. Réservez un diagnostic gratuit de 30 minutes.", cta_btn:"Réserver un diagnostic gratuit"
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === lang));
+  const t = T[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.innerHTML = t[key];
+  });
+  // Pricing lists
+  ['1','2','3'].forEach(n => {
+    const ul = document.getElementById('price'+n+'_list');
+    if (ul && t['price'+n+'_items']) {
+      ul.innerHTML = t['price'+n+'_items'].map(item => '<li>'+item+'</li>').join('');
+    }
+  });
+  // Fade animation
+  document.querySelectorAll('section, .stats').forEach(el => {
+    el.classList.remove('fade-in');
+    void el.offsetWidth;
+    el.classList.add('fade-in');
+  });
+  document.documentElement.lang = lang;
+}
+
+// Init
+setLang('en');
+
+// Cursor
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function loop(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cur2.style.left=rx+'px';cur2.style.top=ry+'px';requestAnimationFrame(loop)})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur2.style.width='40px';cur2.style.height='40px';cur2.style.borderColor='rgba(0,255,148,.9)'});
+  el.addEventListener('mouseleave',()=>{cur2.style.width='24px';cur2.style.height='24px';cur2.style.borderColor='rgba(0,255,148,.5)'});
+});
+</script>
+
+<!-- CONTACT MODAL -->
+<div id="contact-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(5,8,16,0.95);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+  <div style="background:#0c1222;border:1px solid rgba(0,255,148,0.2);max-width:480px;width:90%;padding:2.5rem;position:relative;font-family:'IBM Plex Sans',sans-serif">
+    <button onclick="hideForm()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(232,237,245,0.4);font-size:1.2rem;cursor:pointer;font-family:'IBM Plex Mono',monospace">×</button>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:#00FF94;margin-bottom:1rem">// get in touch</div>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.05em;margin-bottom:0.5rem;color:#E8EDF5">LET'S TALK</h3>
+    <p style="font-size:0.85rem;color:rgba(232,237,245,0.45);margin-bottom:2rem;line-height:1.7">Complete the form and we'll get back to you within 24 hours.</p>
+    <form id="contact-form-el" onsubmit="submitForm(event)" style="display:flex;flex-direction:column;gap:1rem">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(232,237,245,0.4)" id="lbl_name">Full name</label>
+        <input type="text" id="inp_name" required placeholder="Jane Smith" style="background:#080d1a;border:1px solid rgba(0,255,148,0.15);color:#E8EDF5;padding:0.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(0,255,148,0.5)'" onblur="this.style.borderColor='rgba(0,255,148,0.15)'">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(232,237,245,0.4)" id="lbl_company">Company</label>
+        <input type="text" id="inp_company" required placeholder="Acme Fintech" style="background:#080d1a;border:1px solid rgba(0,255,148,0.15);color:#E8EDF5;padding:0.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(0,255,148,0.5)'" onblur="this.style.borderColor='rgba(0,255,148,0.15)'">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(232,237,245,0.4)" id="lbl_email">Work email</label>
+        <input type="email" id="inp_email" required placeholder="jane@acme.com" style="background:#080d1a;border:1px solid rgba(0,255,148,0.15);color:#E8EDF5;padding:0.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(0,255,148,0.5)'" onblur="this.style.borderColor='rgba(0,255,148,0.15)'">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(232,237,245,0.4)" id="lbl_interest">I'm interested in</label>
+        <select id="inp_interest" style="background:#080d1a;border:1px solid rgba(0,255,148,0.15);color:#E8EDF5;padding:0.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;appearance:none;cursor:pointer">
+          <option value="audit" id="opt_audit">Point-in-time audit</option>
+          <option value="retainer" id="opt_retainer">Monthly retainer</option>
+          <option value="enterprise" id="opt_enterprise">Enterprise</option>
+          <option value="info" id="opt_info">Just exploring</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(232,237,245,0.4)" id="lbl_msg">Message (optional)</label>
+        <textarea id="inp_msg" rows="3" placeholder="Tell us about your main security concerns..." style="background:#080d1a;border:1px solid rgba(0,255,148,0.15);color:#E8EDF5;padding:0.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='rgba(0,255,148,0.5)'" onblur="this.style.borderColor='rgba(0,255,148,0.15)'"></textarea>
+      </div>
+      <button type="submit" id="submit-btn" style="background:#00FF94;color:#050810;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.9rem;border:none;cursor:pointer;transition:background .2s;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))">
+        <span id="submit-label">Send message →</span>
+      </button>
+    </form>
+    <div id="form-success" style="display:none;text-align:center;padding:2rem 0">
+      <div style="font-size:2rem;margin-bottom:1rem">✓</div>
+      <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#00FF94;margin-bottom:0.5rem">MESSAGE SENT</h4>
+      <p style="font-size:0.85rem;color:rgba(232,237,245,0.45);line-height:1.7" id="success_msg">We'll be in touch within 24 hours.</p>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function showForm(e) {
+  if(e) e.preventDefault();
+  const m = document.getElementById('contact-modal');
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function hideForm() {
+  document.getElementById('contact-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('contact-modal').addEventListener('click', function(e) {
+  if(e.target === this) hideForm();
+});
+document.addEventListener('keydown', function(e) { if(e.key === 'Escape') hideForm(); });
+
+function submitForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const lbl = document.getElementById('submit-label');
+  lbl.textContent = 'Sending...';
+  btn.style.background = '#00cc76';
+  // Simulate send (replace with Formspree endpoint later)
+  setTimeout(() => {
+    document.getElementById('contact-form-el').style.display = 'none';
+    document.getElementById('form-success').style.display = 'block';
+  }, 1200);
+}
+
+// Update form labels on lang change
+const formLabels = {
+  en: { name:'Full name', company:'Company', email:'Work email', interest:"I'm interested in", msg:'Message (optional)', submit:'Send message →', success:"We'll be in touch within 24 hours.",
+        opt_audit:'Point-in-time audit', opt_retainer:'Monthly retainer', opt_enterprise:'Enterprise', opt_info:'Just exploring' },
+  es: { name:'Nombre completo', company:'Empresa', email:'Email laboral', interest:'Me interesa', msg:'Mensaje (opcional)', submit:'Enviar mensaje →', success:'Te contactaremos en menos de 24 horas.',
+        opt_audit:'Auditoría puntual', opt_retainer:'Retainer mensual', opt_enterprise:'Enterprise', opt_info:'Solo explorando' },
+  pt: { name:'Nome completo', company:'Empresa', email:'Email corporativo', interest:'Tenho interesse em', msg:'Mensagem (opcional)', submit:'Enviar mensagem →', success:'Entraremos em contato em até 24 horas.',
+        opt_audit:'Auditoria pontual', opt_retainer:'Retainer mensal', opt_enterprise:'Enterprise', opt_info:'Apenas explorando' },
+  fr: { name:'Nom complet', company:'Entreprise', email:'Email professionnel', interest:"Je suis intéressé par", msg:'Message (optionnel)', submit:'Envoyer le message →', success:'Nous vous répondrons dans les 24 heures.',
+        opt_audit:'Audit ponctuel', opt_retainer:'Retainer mensuel', opt_enterprise:'Enterprise', opt_info:'Simple curiosité' }
+};
+
+const _origSetLang = setLang;
+function setLang(lang) {
+  _origSetLang(lang);
+  const fl = formLabels[lang] || formLabels.en;
+  const set = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
+  set('lbl_name', fl.name); set('lbl_company', fl.company); set('lbl_email', fl.email);
+  set('lbl_interest', fl.interest); set('lbl_msg', fl.msg); set('submit-label', fl.submit);
+  set('success_msg', fl.success);
+  set('opt_audit', fl.opt_audit); set('opt_retainer', fl.opt_retainer);
+  set('opt_enterprise', fl.opt_enterprise); set('opt_info', fl.opt_info);
+  const ph = document.getElementById('inp_msg');
+  if(ph) ph.placeholder = lang === 'es' ? 'Contanos sobre tus principales preocupaciones de seguridad...' : lang === 'pt' ? 'Conte-nos sobre suas principais preocupações de segurança...' : lang === 'fr' ? 'Parlez-nous de vos principales préoccupations de sécurité...' : 'Tell us about your main security concerns...';
+}
+</script>
+
+</body>
+</html>
